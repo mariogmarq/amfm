@@ -1,4 +1,4 @@
-package scrap
+package login
 
 import (
 	"testing"

@@ -1,4 +1,4 @@
-package scrap
+package login
 
 import (
 	"strings"
@@ -8,8 +8,9 @@ import (
 
 var url = "https://accounts.google.com/signin/v2/identifier?ltmpl=meet&continue=https%3A%2F%2Fmeet.google.com%3Fhs%3D193&_ga=2.197449007.1812202053.1614183595-1863875012.1614183595&flowName=GlifWebSignIn&flowEntry=ServiceLogin"
 
-//Login login with your go.ugr.es account(University of Granada) and returns a browser with the
-//session opened
+//Login returns a browser with session already opened, this session can be opened with the following
+//types of accounts: google, go.ugr.es. If you want to open add other type of account create an
+//issue at https://github.com/mariogmarq/amfm
 func Login(email string, password string) *rod.Browser {
 	//Create browser and travel to login page
 	browser := rod.New().MustConnect()
