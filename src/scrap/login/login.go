@@ -1,6 +1,7 @@
 package login
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/go-rod/rod"
@@ -11,7 +12,7 @@ var url = "https://accounts.google.com/signin/v2/identifier?ltmpl=meet&continue=
 //Login returns a browser with session already opened, this session can be opened with the following
 //types of accounts: google, go.ugr.es. If you want to open add other type of account create an
 //issue at https://github.com/mariogmarq/amfm
-func Login(email string, password string) *rod.Browser {
+func Login(email string, password string) (*rod.Browser, error) {
 	//Create browser and travel to login page
 	browser := rod.New().MustConnect()
 	page := browser.MustPage(url)
@@ -21,9 +22,9 @@ func Login(email string, password string) *rod.Browser {
 	page.MustSearch(`div[id="identifierNext"`).MustClick()
 
 	//Search for handler
-	handler := findLoginHandler(email)
-	if handler == nil {
-		panic("Invalid email")
+	handler, err := findLoginHandler(email)
+	if err != nil {
+		return nil, err
 	}
 
 	handler(email, password, browser, page)
@@ -31,7 +32,7 @@ func Login(email string, password string) *rod.Browser {
 	//Wait for meet page(Here I use an image with an specific html tag)
 	page.MustSearch(`img[role="img"]`)
 
-	return browser
+	return browser, nil
 }
 
 func loginUGR(email string, password string, browser *rod.Browser, page *rod.Page) {
@@ -48,18 +49,18 @@ func loginGoogle(email string, password string, browser *rod.Browser, page *rod.
 	page.MustSearch(`div[id="passwordNext"]`).MustClick()
 }
 
-func findLoginHandler(email string) func(email string, password string, browser *rod.Browser, page *rod.Page) {
+func findLoginHandler(email string) (func(email string, password string, browser *rod.Browser, page *rod.Page), error) {
 	words := strings.Split(email, "@")
 	if len(words) != 2 {
-		return nil
+		return nil, errors.New("given email not compatible or not valid")
 	}
 
 	switch words[1] {
 	case "go.ugr.es":
-		return loginUGR
+		return loginUGR, nil
 	case "gmail.com":
-		return loginGoogle
+		return loginGoogle, nil
 	default:
-		return nil
+		return nil, errors.New("given email not compatible or not valid")
 	}
 }
