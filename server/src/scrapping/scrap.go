@@ -1,6 +1,8 @@
 package scrap
 
 import (
+	"strings"
+
 	"github.com/go-rod/rod"
 )
 
@@ -16,15 +18,47 @@ func Login(email string, password string) *rod.Browser {
 	//Enter email and wait for being redirected to ugr login
 	page.MustSearch("input[id]").MustInput(email)
 	page.MustSearch(`div[id="identifierNext"`).MustClick()
+
+	//Search for handler
+	handler := findLoginHandler(email)
+	if handler == nil {
+		panic("Invalid email")
+	}
+
+	handler(email, password, browser, page)
+
+	//Wait for meet page(Here I use an image with an specific html tag)
+	page.MustSearch(`img[role="img"]`)
+
+	return browser
+}
+
+func loginUGR(email string, password string, browser *rod.Browser, page *rod.Page) {
 	page.MustSearch(`img[src="https://idp.ugr.es/go/module.php/themeSURFnet/logo.png"`)
 
 	//Login at ugr page
 	page.MustSearch(`input[id="username"]`).MustInput(email)
 	page.MustSearch(`input[id="password"]`).MustInput(password)
 	page.MustSearch(`input[value="Login"]`).MustClick()
+}
 
-	//Wait for meet page(Here I use an image with an specific html tag)
-	page.MustSearch(`img[role="img"]`)
+func loginGoogle(email string, password string, browser *rod.Browser, page *rod.Page) {
+	page.MustSearch(`input[name="password"]`).MustInput(password)
+	page.MustSearch(`div[id="passwordNext"]`).MustClick()
+}
 
-	return browser
+func findLoginHandler(email string) func(email string, password string, browser *rod.Browser, page *rod.Page) {
+	words := strings.Split(email, "@")
+	if len(words) != 2 {
+		return nil
+	}
+
+	switch words[1] {
+	case "go.ugr.es":
+		return loginUGR
+	case "gmail.com":
+		return loginGoogle
+	default:
+		return nil
+	}
 }
